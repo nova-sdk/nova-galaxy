@@ -8,6 +8,7 @@ from .outputs import Outputs
 from .parameters import Parameters
 from .tool import Tool
 from .tool_runner import ToolRunner
+from .workflow import Workflow
 
 __all__ = [
     "BasicTool",
@@ -19,6 +20,7 @@ __all__ = [
     "Parameters",
     "Tool",
     "ToolRunner",
+    "Workflow",
 ]
 
 __version__ = importlib.metadata.version("nova-galaxy")
