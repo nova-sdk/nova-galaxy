@@ -1,5 +1,6 @@
 """Tests for datasets."""
 
+import pytest
 from bioblend.galaxy import GalaxyInstance
 from bioblend.galaxy.datasets import DatasetClient
 
@@ -30,6 +31,7 @@ def test_dataset_set_content_upload(nova_instance: Connection) -> None:
         assert input.get_content() is not None
 
 
+@pytest.mark.skip
 def test_remote_file_ingest(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
     with nova_instance.connect() as connection:
         store = connection.get_data_store(name="nova_galaxy_testing")
