@@ -11,9 +11,11 @@ if TYPE_CHECKING:
     from .data_store import Datastore
 from nova.common.job import WorkState
 
-from .dataset import LOAD_NEUTRON_DATA_TOOL, Dataset, DatasetCollection, DataState
+from .dataset import Dataset, DatasetCollection
 from .outputs import Outputs
 from .parameters import Parameters
+
+REGISTER_NEUTRON_DATA_TOOL = "neutrons_register"
 
 
 class JobStatus:
@@ -144,6 +146,7 @@ class Job:
         galaxy_instance = self.store.nova_connection.galaxy_instance
         dataset_client = DatasetClient(galaxy_instance)
         dataset_ids: Dict[str, str] = {}
+        datasets_to_ingress = {}
         for name, dataset in datasets.items():
             if self.status.state in [WorkState.STOPPING, WorkState.CANCELING]:
                 self.cleanup_datasets(dataset_ids)
@@ -153,16 +156,15 @@ class Job:
                 self._link_existing_dataset(dataset)
                 if dataset.id:
                     dataset_ids[name] = dataset.id
-                    dataset.state = DataState.IN_GALAXY
                     continue
 
             if dataset.remote_file:
-                self._ingest_dataset(dataset)
+                datasets_to_ingress[dataset.path] = dataset
             else:
                 self._upload_single_dataset(dataset)
-            dataset_ids[name] = dataset.id
-            dataset.state = DataState.IN_GALAXY
-
+            if dataset.id:
+                dataset_ids[name] = dataset.id
+        self._ingest_datasets(datasets_to_ingress)
         for dataset_output in dataset_ids.values():
             if self.status.state in [WorkState.STOPPING, WorkState.CANCELING]:
                 self.cleanup_datasets(dataset_ids)
@@ -178,14 +180,23 @@ class Job:
             dataset.id = existing_data[0]["id"]
             dataset.store = self.store
 
-    def _ingest_dataset(self, dataset: Dataset) -> None:
+    def _ingest_datasets(self, datasets: dict[str, Dataset]) -> None:
+        dataset_client = DatasetClient(self.store.nova_connection.galaxy_instance)
         tool_inputs = galaxy.tools.inputs.inputs()
-        tool_inputs.set_param("filepath", dataset.path)
+        i = 0
+        for d in datasets:
+            tool_inputs.set_param(f"series_{i}|input", d)
+            i += 1
         results = self.galaxy_instance.tools.run_tool(
-            history_id=self.store.history_id, tool_id=LOAD_NEUTRON_DATA_TOOL, tool_inputs=tool_inputs
+            history_id=self.store.history_id, tool_id=REGISTER_NEUTRON_DATA_TOOL, tool_inputs=tool_inputs
         )
-        dataset.id = results["outputs"][0]["id"]
-        dataset.store = self.store
+        for output in results["outputs"]:
+            dataset_client.wait_for_dataset(dataset_id=output["id"])
+            # If two datasets have the same path, then shouldn't matter
+            dataset = datasets.get(output["name"], None)
+            if dataset:
+                dataset.id = output["id"]
+                dataset.store = self.store
 
     def _upload_single_dataset(self, dataset: Dataset) -> None:
         galaxy_instance = self.store.nova_connection.galaxy_instance

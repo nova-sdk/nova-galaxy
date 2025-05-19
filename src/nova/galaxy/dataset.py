@@ -5,25 +5,17 @@ as well as output data from Galaxy tools.
 """
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from bioblend.galaxy.dataset_collections import DatasetCollectionClient
 from bioblend.galaxy.datasets import DatasetClient
+from bioblend.galaxy.tools import inputs
 
 if TYPE_CHECKING:
     from .data_store import Datastore
 
 LOAD_NEUTRON_DATA_TOOL = "neutrons_load_data"
-
-
-class DataState(Enum):
-    """The state of a dataset in Galaxy."""
-
-    LOCAL = "local"
-    REMOTE = "remote"
-    IN_GALAXY = "in_galaxy"
 
 
 class DatasetRegistrationError(Exception):
@@ -95,10 +87,6 @@ class Dataset(AbstractData):
         self.store: Optional["Datastore"] = None
         self.file_type: str = Path(path).suffix
         self.remote_file = remote_file
-        if remote_file:
-            self.state = DataState.REMOTE
-        else:
-            self.state = DataState.LOCAL
         self.force_upload = force_upload
         self._content: Any = None
 
@@ -118,7 +106,7 @@ class Dataset(AbstractData):
         dataset_client = DatasetClient(galaxy_instance)
         history_id = galaxy_instance.histories.get_histories(name=store.name)[0]["id"]
         if self.remote_file:
-            tool_inputs = store.nova_connection.galaxy_instance.tools.inputs.inputs()  # type: ignore
+            tool_inputs = inputs.inputs()  # type: ignore
             tool_inputs.set_param("filepath", self.path)
             results = store.nova_connection.galaxy_instance.tools.run_tool(
                 history_id=store.history_id, tool_id=LOAD_NEUTRON_DATA_TOOL, tool_inputs=tool_inputs
@@ -139,7 +127,6 @@ class Dataset(AbstractData):
             self.id = dataset_info["outputs"][0]["id"]
             self.store = store
         dataset_client.wait_for_dataset(self.id)
-        self.state = DataState.IN_GALAXY
 
     def download(self, local_path: str) -> AbstractData:
         """Downloads this dataset to the local path given."""

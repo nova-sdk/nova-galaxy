@@ -13,6 +13,9 @@ from nova.galaxy.tool import Tool
 
 TEST_TOOL_ID = "neutrons_remote_command"
 TEST_INT_TOOL_ID = "interactive_tool_generic_output"
+# If test fails, these files may be moved or no longer exists.
+REMOTE_FILE_PATH = "/HFIR/CG3/shared/Cycle509/IntermediateConfigNiQ_RC509.txt"
+REMOTE_FILE_PATH_2 = "/HFIR/CG3/shared/Cycle509/Long6AConfigURBj_RC509.txt"
 
 
 def test_run_tool(nova_instance: Connection) -> None:
@@ -189,3 +192,19 @@ def test_existing_dataset_as_parameter(nova_instance: Connection, galaxy_instanc
         history_content = galaxy_instance.histories.show_history(history_id=store.history_id, contents=True)
         # should only be 2 elements here (tool and the dataset passed as param), since dataset was manually uploaded
         assert len(history_content) == 2
+
+
+def test_remote_dataset_as_parameter(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
+    with nova_instance.connect() as connection:
+        store = connection.get_data_store(name="nova_galaxy_testing")
+        store.mark_for_cleanup()
+        test_tool = Tool(TEST_TOOL_ID)
+        test_data = Dataset(path=REMOTE_FILE_PATH, remote_file=True)
+        test_data_2 = Dataset(path=REMOTE_FILE_PATH_2, remote_file=True)
+        params = Parameters()
+        params.add_input("test", test_data)
+        params.add_input("test2", test_data_2)
+        test_tool.run(data_store=store, params=params)
+        history_content = galaxy_instance.histories.show_history(history_id=store.history_id, contents=True)
+        for item in history_content:
+            assert item["state"] == "ok"
