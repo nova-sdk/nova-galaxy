@@ -35,7 +35,7 @@ class DatasetRegistrationError(Exception):
 
 
 class AbstractData(ABC):
-    """Encapsulates data for use in Galaxy toools."""
+    """Encapsulates data for use in Galaxy tools."""
 
     def __init__(self) -> None:
         super().__init__()
