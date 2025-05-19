@@ -15,7 +15,7 @@ from bioblend.galaxy.tools import inputs
 if TYPE_CHECKING:
     from .data_store import Datastore
 
-LOAD_NEUTRON_DATA_TOOL = "neutrons_load_data"
+LOAD_NEUTRON_DATA_TOOL = "neutrons_register"
 
 
 class DatasetRegistrationError(Exception):
@@ -107,7 +107,7 @@ class Dataset(AbstractData):
         history_id = galaxy_instance.histories.get_histories(name=store.name)[0]["id"]
         if self.remote_file:
             tool_inputs = inputs.inputs()  # type: ignore
-            tool_inputs.set_param("filepath", self.path)
+            tool_inputs.set_param("series_0|input", self.path)
             results = store.nova_connection.galaxy_instance.tools.run_tool(
                 history_id=store.history_id, tool_id=LOAD_NEUTRON_DATA_TOOL, tool_inputs=tool_inputs
             )
