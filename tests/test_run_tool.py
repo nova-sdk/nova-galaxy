@@ -2,7 +2,6 @@
 
 import time
 
-import pytest
 from bioblend.galaxy import GalaxyInstance
 from bioblend.galaxy.datasets import DatasetClient
 
@@ -195,7 +194,6 @@ def test_existing_dataset_as_parameter(nova_instance: Connection, galaxy_instanc
         assert len(history_content) == 2
 
 
-@pytest.mark.skip
 def test_remote_dataset_as_parameter(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
     with nova_instance.connect() as connection:
         store = connection.get_data_store(name="nova_galaxy_testing")
