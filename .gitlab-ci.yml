@@ -9,7 +9,7 @@ variables:
   IMAGE_NAME: ${NDIP_DOCKER_REPOSITORY}/${CI_PROJECT_PATH}
   IMAGE_TAG: "0.1.0"
   GALAXY_URL: "https://calvera-test.ornl.gov"
-  GALAXY_KEY: ${SERVICE_ACCOUNT_API_KEY}
+  GALAXY_KEY: ${CALVERA_TEST_API_KEY}
 
 before_script:
   - curl https://code.ornl.gov/rse-deployment/rse-sharables/raw/master/rse-bash-modules.sh -O
