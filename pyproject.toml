@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nova-galaxy"
-version = "0.10.1"
+version = "0.10.2"
 description = "Utilties for accessing the ORNL Galaxy instance"
 authors = ["Greg Watson <watsongr@ornl.gov>", "Gregory Cage <cagege@ornl.gov>", "Sergey Yakubov <yakubovs@ornl.gov>"]
 readme = "README.md"

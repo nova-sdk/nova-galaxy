@@ -1,4 +1,14 @@
-## Nova Galaxy 0.9.1
+### Nova Galaxy 0.10.2
+- Added ability to mark datasets as remote files, and Nova-Galaxy will attempt to ingress them when running tools (thanks to Gregory Cage). [Merge Request 25](https://code.ornl.gov/ndip/public-packages/nova-galaxy/-/merge_requests/25)
+- Datasets can now be linked to existing datasets when uploaded as tool parameters using force_upload parameter. This saves users from having to upload a dataset multiple times if not necessary (thanks to Gregory Cage). [Merge Request 25](https://code.ornl.gov/ndip/public-packages/nova-galaxy/-/merge_requests/25)
+
+### Nova Galaxy 0.10.1
+- Dependency update (thanks to Sergey Yakubov). [Commit](https://code.ornl.gov/ndip/public-packages/nova-galaxy/-/commit/1f532dbbd5c6603c7e358101c0b3830fb2b36f5a)
+
+### Nova Galaxy 0.10.0
+- Added ToolRunner class to facilitate an event driven running of tools (thanks to Sergey Yakubov). [Merge Request 24](https://code.ornl.gov/ndip/public-packages/nova-galaxy/-/merge_requests/24)
+
+### Nova Galaxy 0.9.1
 - Added `get_full_status` method to tool in order to get detailed messages mostly for error states (thanks to Gregory Cage). [Merge Request 23](https://code.ornl.gov/ndip/public-packages/nova-galaxy/-/merge_requests/23)
 
 ### Nova Galaxy 0.9.0
