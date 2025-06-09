@@ -12,6 +12,7 @@ nova-galaxy revolves around several key concepts that facilitate interaction wit
    datasets
    tools
    interactive_tools
+   workflows
    outputs
    parameters
    tool_runner
