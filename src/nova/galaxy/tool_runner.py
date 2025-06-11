@@ -120,14 +120,14 @@ class ToolRunner:
 
         if tool_state == WorkState.ERROR:
             if tool_status.details:
-                self.current_outputs.stderr = f"{tool_status.details}\n{self.current_outputs.stderr}"
+                self.current_outputs.stderr = f"{tool_status.details['message']}\n{self.current_outputs.stderr}"
 
     async def _monitor_run(self) -> None:
         while True:
             try:
                 if self.nova_tool or self.error:
                     status = self._get_job_status()
-                    if self.current_status.state != status.state:
+                    if self.current_status.state != status.state or self.current_status.details != status.details:
                         self.current_status = status
                         await self._send_status_change_signal()
                         if job_stopped(self.current_status.state):
@@ -139,7 +139,8 @@ class ToolRunner:
 
     async def _send_status_change_signal(self) -> None:
         if self.current_status.state == WorkState.ERROR:
-            await self.error_message_signal.send_async(self.sender_id, error_message=self.current_status.details)
+            error_message = self.current_status.details.get("message", "")
+            await self.error_message_signal.send_async(self.sender_id, error_message=error_message)
         await self.progress_signal.send_async(
             self.sender_id, state=self.current_status.state, details=self.current_status.details
         )
@@ -148,11 +149,11 @@ class ToolRunner:
         if self.nova_tool:
             status = copy(self.nova_tool.get_full_status())
             if status.state == WorkState.ERROR:
-                status.details = "Error running NDIP tool. Please see tool outputs for more information."
+                status.details = {"message": "Error running NDIP tool. Please see tool outputs for more information."}
         else:
             status = JobStatus()
             status.state = WorkState.ERROR
-            status.details = self.error
+            status.details = {"message": self.error}
         return status
 
     def _run_in_background(self) -> None:
