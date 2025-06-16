@@ -67,7 +67,7 @@ class Invocation:
             "running": WorkState.RUNNING,
             "ok": WorkState.FINISHED,
             "error": WorkState.ERROR,
-            "paused": WorkState.PAUSED,
+            "paused": WorkState.QUEUED,
             "canceled": WorkState.CANCELED,
             
             # Invocation-specific states
@@ -176,8 +176,6 @@ class Invocation:
                                 bioblend_params[step_id] = value
 
             self.status.state = WorkState.QUEUED
-            print(bioblend_inputs)
-            print(bioblend_params)
             invocation_info = self.galaxy_instance.workflows.invoke_workflow(
                 workflow_id=self.workflow_id,
                 inputs=bioblend_inputs,
@@ -187,7 +185,6 @@ class Invocation:
             )
             self.invocation_id = invocation_info['id']
             self.status.state = self._map_galaxy_state_to_workstate(invocation_info['state'])
-
         except Exception as e:
             self.status.state = WorkState.ERROR
             self.status.details = f"Failed to prepare or submit workflow invocation: {str(e)}"
@@ -198,7 +195,6 @@ class Invocation:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
-        # TODO: Consider adding optional polling with status updates for long workflows
         self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id)
 
 
@@ -465,3 +461,24 @@ class Workflow(AbstractWork):
             return self._invocation.get_step_jobs()
         return []
 
+    def get_active_step(self) -> Optional["Job"]:
+        """Gets the currently active (running) step in the workflow invocation.
+
+        This method iterates through all jobs associated with the workflow steps
+        and returns the first one found to be in the 'RUNNING' state.
+
+        Returns
+        -------
+        Optional["Job"]
+            The Job instance representing the currently running step.
+            Returns None if no step is currently running, if the workflow
+            hasn't been run yet, or if step jobs cannot be retrieved.
+        """
+        if not self._invocation:
+            return None
+        
+        step_jobs = self._invocation.get_step_jobs()
+        for job in step_jobs:
+            if job.status.state == WorkState.RUNNING:
+                return job
+        return None
