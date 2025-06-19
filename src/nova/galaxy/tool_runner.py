@@ -11,6 +11,7 @@ from blinker import signal
 from nova.common.job import ToolOutputs, WorkState
 from nova.common.signals import Signal, ToolCommand, get_signal_id
 from nova.galaxy import Connection, Tool
+from nova.galaxy.connection import global_cleanup, global_get_running_tools
 from nova.galaxy.interfaces import BasicTool
 from nova.galaxy.job import JobStatus
 
@@ -65,6 +66,10 @@ class ToolRunner:
         self.error_message_signal = signal(get_signal_id(id, Signal.ERROR_MESSAGE))
         self.execution_signal = signal(get_signal_id(id, Signal.TOOL_COMMAND))
         self.outputs_signal = signal(get_signal_id(id, Signal.OUTPUTS))
+        self.kill_on_exit_signal = signal(Signal.EXIT_SIGNAL)
+        self.kill_on_exit_signal.connect(global_cleanup, weak=False)
+        self.fetch_all_jobs_signal = signal(Signal.GET_ALL_TOOLS)
+        self.fetch_all_jobs_signal.connect(global_get_running_tools, weak=False)
 
         self.error: str = ""
         self.loop: Optional[asyncio.AbstractEventLoop] = None

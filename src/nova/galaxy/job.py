@@ -149,7 +149,7 @@ class Job:
 
         # Set Tool Inputs
         tool_inputs = galaxy.tools.inputs.inputs()
-        if params:
+        if params and len(params.inputs) > 0:
             for param, val in params.inputs.items():
                 if isinstance(val, Dataset):
                     datasets_to_upload[param] = val
