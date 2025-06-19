@@ -1,5 +1,7 @@
 ## Nova Galaxy 0.12.0 (in progress)
 
+### Nova Galaxy 0.11.1
+- Improved the performance of Job.get_url when check_url parameter is set to False (thanks to John Duggan). [Pull request 43](https://github.com/nova-model/nova-galaxy/pull/43)
 
 ### Nova Galaxy 0.11.0
 - Added detailed job status (thanks to Sergey Yakubov) [Pull request 40](https://github.com/nova-model/nova-galaxy/pull/40)

@@ -322,6 +322,8 @@ class Job:
             return self.url
         timer = max_tries
         while timer > 0:
+            if timer < max_tries:
+                time.sleep(1)
             try:
                 entry_points = self.galaxy_instance.make_get_request(
                     f"{self.store.nova_connection.galaxy_url}/api/entry_points?job_id={self.id}"
@@ -329,15 +331,19 @@ class Job:
                 for ep in entry_points.json():
                     if ep["job_id"] == self.id and ep.get("target", None):
                         url = f"{self.store.nova_connection.galaxy_url}{ep['target']}"
-                        self.url = url
+
+                        if not check_url:
+                            self.url = url
+                            return url
+
                         response = self.galaxy_instance.make_get_request(url)
-                        if response.status_code == 200 or not check_url:
+                        if response.status_code == 200:
+                            self.url = url
                             return url
             except Exception:
                 continue
             finally:
                 timer -= 1
-                time.sleep(1)
         return None
 
     def get_console_output(self, start: int, length: int) -> Dict[str, str]:
