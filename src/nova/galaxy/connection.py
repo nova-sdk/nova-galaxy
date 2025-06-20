@@ -8,6 +8,26 @@ from deprecated import deprecated
 from .data_store import Datastore
 from .tool import stop_all_tools_in_store
 
+_global_connections: List = []
+
+
+def global_cleanup(*args: Any, **kwargs: Any) -> None:
+    """Stop all tools in all data stores."""
+    global _global_connections
+    for conn in _global_connections.copy():
+        conn.close(force_stop=True)
+    _global_connections = []
+
+
+def global_get_running_tools(*args: Any, **kwargs: Any) -> List:
+    """Get all running tools in all data stores."""
+    global _global_connections
+    tools: List = []
+    for conn in _global_connections:
+        for store in conn.datastores:
+            tools += store.recover_tools()
+    return tools
+
 
 class GalaxyConnectionError(Exception):
     """Exception raised for errors in the connection.
@@ -89,15 +109,26 @@ class ConnectionHelper:
         store: Datastore
             The data store to remove from this connection.
         """
-        store.cleanup()
+        if not store.persist_store:
+            store.cleanup()
         self.datastores.remove(store)
 
-    def close(self) -> None:
+    def close(self, force_stop: bool = False) -> None:
+        """Closes the connection and stops all jobs in non-persisted data stores.
+
+        Parameters
+        ----------
+        force_stop: bool
+            Force data stores to stop currently running jobs even persisted stores. Will not delete persisted stores.
+
+        """
+        global _global_connections
         # Remove all data stores after execution
         for store in self.datastores:
-            if not store.persist_store:
+            if not store.persist_store or force_stop:
                 stop_all_tools_in_store(store)
                 self.remove_data_store(store)
+        _global_connections.remove(self)
 
 
 class Connection:
@@ -144,6 +175,8 @@ class Connection:
         ------
             ValueError: If the Galaxy URL or API key is not provided.
         """
+        global _global_connections
         self._init_galaxy_instance()
         conn = ConnectionHelper(self.galaxy_instance, self.galaxy_url)
+        _global_connections.append(conn)
         return conn

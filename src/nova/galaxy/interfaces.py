@@ -1,7 +1,7 @@
 """Abstract interfaces and type definitions."""
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Optional, Tuple
 
 from nova.galaxy.data_store import Datastore
 from nova.galaxy.parameters import Parameters
@@ -22,7 +22,7 @@ class BasicTool(ABC):
         self.store = store
 
     @abstractmethod
-    def prepare_tool(self) -> Tuple[Tool, Parameters]:
+    def prepare_tool(self) -> Tuple[Tool, Optional[Parameters]]:
         """Prepare tool to run."""
         raise Exception("Please implement in a concrete class")
 
