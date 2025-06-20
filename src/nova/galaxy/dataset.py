@@ -18,22 +18,6 @@ if TYPE_CHECKING:
 LOAD_NEUTRON_DATA_TOOL = "neutrons_register"
 
 
-class DatasetRegistrationError(Exception):
-    """
-    Exception raised when dataset registration fails.
-
-    Attributes
-    ----------
-        message (str): Explanation of the error.
-        details (Any): Additional details about the error.
-    """
-
-    def __init__(self, message: str, details: Any):
-        self.message = message
-        self.details = details
-        super().__init__(self.message, self.details)
-
-
 class AbstractData(ABC):
     """Encapsulates data for use in Galaxy tools."""
 
