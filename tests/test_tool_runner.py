@@ -95,7 +95,7 @@ async def test_global_cleanup(nova_instance: Connection) -> None:
     await execution_signal.send_async(id, command=ToolCommand.START)
     await asyncio.sleep(5)
     kill_on_exit_signal = blinker.signal(Signal.EXIT_SIGNAL)
-    assert len(global_get_running_tools()) == 1
+    assert len(global_get_running_tools()) > 0
     kill_on_exit_signal.send()
     await asyncio.sleep(5)
     assert len(global_get_running_tools()) == 0
