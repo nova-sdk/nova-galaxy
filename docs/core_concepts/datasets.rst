@@ -39,7 +39,7 @@ Datasets can be uploaded by to a store by calling the upload method.
     my_dataset.upload(store, name="optional name")
 
 
-Note, remote files are not actually "uploaded", they will be ingested into Galaxy as a link to the actual file, so file size should not slow down the system.
+Note, when the remote_files flag is set to true, the files are not actually "uploaded". Instead, they will be ingested into Galaxy as a link to the actual file, so file size should not slow down the system.
 
 When running tools, any Dataset that is used as an input parameter will be automatically uploaded/ingested, unless that dataset has already been uploaded.
 In order to force the dataset to be uploaded when a tool runs, even if it has been uploaded before, the dataset can be marked with force_upload:
