@@ -29,7 +29,7 @@ For example, if your upstream Galaxy instance has access to a directory named `/
 
     my_dataset = Dataset(path="/SNS/path/to/file.txt", remote_file=True)
 
-Datasets can be uploaded by to a store by calling the upload method.
+Datasets can be uploaded to a store by calling the upload method.
 
 .. code-block:: python
 
