@@ -24,6 +24,6 @@ This example illustrates how to work with dataset collections (note that uploadi
        # Download the collection
        my_collection.download("path/to/output/directory")
 
-       # Get the content of the collection
+       # Get info of each element of the collection
        content = my_collection.get_content()
        print(content)

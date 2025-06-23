@@ -12,7 +12,7 @@ To begin using nova-galaxy, you need to initialize a `Nova` instance with your G
    # Initialize Nova with your Galaxy server URL and API key
    galaxy_url = "your_galaxy_url"
    galaxy_key = "your_galaxy_api_key"
-   nova = Nova(galaxy_url, galaxy_key)
+   nova = Connection(galaxy_url, galaxy_key)
 
    # Connect to Galaxy and perform operations within the 'with' block
    with nova.connect() as conn:

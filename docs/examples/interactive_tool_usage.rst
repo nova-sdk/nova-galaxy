@@ -15,7 +15,7 @@ This example demonstrates how to run an interactive tool and retrieve its URL.
 
    with nova.connect() as conn:
        data_store = conn.create_data_store("Interactive Tool Example")
-
+       data_store.mark_for_cleanup()
        # Create and upload a dataset if needed
        # my_dataset = Dataset("path/to/your/file.txt")
        # my_dataset.upload(data_store)
@@ -33,3 +33,6 @@ This example demonstrates how to run an interactive tool and retrieve its URL.
            print(f"Access the interactive tool at: {url}")
        except Exception as e:
            print(f"Error running interactive tool: {e}")
+
+       # Fetch the url again
+       url = interactive_tool.get_url()
