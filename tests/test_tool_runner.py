@@ -16,6 +16,7 @@ GALAXY_URL = os.environ.get("NOVA_GALAXY_TEST_GALAXY_URL", "https://calvera-test
 GALAXY_API_KEY = os.environ.get("NOVA_GALAXY_TEST_GALAXY_KEY", "")
 
 
+# [BasicTool example]
 class RemoteCommandTool(BasicTool):
     """Class that prepares RemoteCommandTool tool."""
 
@@ -33,6 +34,9 @@ class RemoteCommandTool(BasicTool):
             raise Exception("no outputs")
         data = outputs.get_dataset("output1")
         return data.get_content()
+
+
+# [BasicTool example complete]
 
 
 class NotebookTool(BasicTool):
@@ -54,11 +58,13 @@ class NotebookTool(BasicTool):
 # in one place to test
 @pytest.mark.asyncio
 async def test_tool_runner(nova_instance: Connection) -> None:
+    # [tool runner example start]
     id = "test"
     ToolRunner(id, RemoteCommandTool(), lambda: "nova_galaxy_testing", GALAXY_URL, GALAXY_API_KEY)
     execution_signal = blinker.signal(get_signal_id(id, Signal.TOOL_COMMAND))
     progress_signal = blinker.signal(get_signal_id(id, Signal.PROGRESS))
     await execution_signal.send_async(id, command=ToolCommand.START)
+    # [tool runner example start complete]
 
     # setup state change callback and update results
     results: Dict[str, Any] = {"res": None}

@@ -5,16 +5,17 @@ Data Stores
 
 A `Datastore` or `Data Store` in nova-galaxy represents a Galaxy history. It serves as a container for organizing your data and tool outputs within Galaxy.
 
-.. code-block:: python
+You will need to create your connection as is standard with the galaxy_url and galaxy_key values set.
 
-    from nova.galaxy import Nova
+.. literalinclude:: ../../tests/conftest.py
+    :start-after: setup nova connection
+    :end-before: setup nova connection complete
+    :dedent:
 
-    galaxy_url = "your_galaxy_url"
-    galaxy_key = "your_galaxy_api_key"
-    connection = Connection(galaxy_url, galaxy_key)
-
-    with connection.connect() as conn:
-        data_store = conn.create_data_store("My Data Store")
+.. literalinclude:: ../../tests/test_data_store.py
+    :start-after: create new datastore
+    :end-before: create new datastore complete
+    :dedent:
 
 By default data stores are persisted, meaning that their jobs and outputs will be available to retrieve even after the connection is closed.
 Datastores (or data stores) also keep their namespace even after the application is exited. Meaning, if you name your data store "Data1", then
@@ -25,45 +26,19 @@ In order to delete and cleanup your data stores (ie delete all outputs/resources
 
 First you can mark a data store for cleanup automatically when you close your nova connection.
 
-.. code-block:: python
+.. literalinclude:: ../../tests/test_data_store.py
+    :start-after: create new datastore
+    :end-before: mark for cleanup complete
+    :dedent:
 
-    with connection.connect() as conn:
-        data_store = conn.create_data_store("My Data Store")
-        data_store.mark_for_cleanup()
-        # when the 'with' block exits, the data store will be cleaned up.
+When the 'with' block exits, the data store will be cleaned up. This will also work when the connection class is used without the 'with' syntax.
 
-This will also work when the connection class is used without the 'with' syntax.
+.. literalinclude:: ../../tests/test_data_store.py
+    :start-after: manual connection start
+    :end-before: manual connection complete
+    :dedent:
 
-.. code-block:: python
-
-    active_connection = connection.connect()
-    data_store = conn.create_data_store("My Data Store")
-    data_store.mark_for_cleanup()
-    active_connection.close()
-    # when close() is called, the data store will be cleaned up.
+When the `connection.close()` method is called, the data store will be cleaned up. You can also manually clean a data store by invoking the cleanup class method: `cleanup()`.
 
 
-You can also manually clean a data store by invoking the cleanup class method:
-
-.. code-block:: python
-
-    active_connection = connection.connect()
-    data_store = active_connection.create_data_store("My Data Store")
-    # Do work
-    data_store.cleanup()
-    data_store = active_connection.create_data_store("My Data Store")
-    # In order to use this data store again, you will have to call create_data_store again. This will be an empty store since the previous was cleaned up.
-
-If at any point, you want to persist a store that has been marked for cleanup, you can call the persist class method:
-
-.. code-block:: python
-
-    active_connection = connection.connect()
-    data_store = active_connection.create_data_store("My Data Store")
-    # Run your first tool
-    data_store.cleanup()
-    data_store = active_connection.create_data_store("My Data Store")
-    # Run your second tool
-    data_store.persist()
-    active_connection.close()
-    # All data in the store from the second tool will be persisted, whereas the first tool's outputs will be gone.
+In order to use the data store again after it's been clean up, you will have to call create_data_store again. If at any point, you want to persist a store that has been marked for cleanup, you can call the `persist()` class method.

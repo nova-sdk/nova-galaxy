@@ -13,7 +13,9 @@ GALAXY_API_KEY = os.environ.get("NOVA_GALAXY_TEST_GALAXY_KEY")
 
 @pytest.fixture
 def nova_instance() -> Connection:
+    # [setup nova connection]
     nova = Connection(GALAXY_URL, GALAXY_API_KEY)  # type: ignore
+    # [setup nova connection complete]
     return nova
 
 

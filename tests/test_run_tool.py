@@ -23,9 +23,11 @@ def test_run_tool(nova_instance: Connection) -> None:
         store = connection.get_data_store(name="nova_galaxy_testing")
         store.mark_for_cleanup()
         test_tool = Tool(TEST_TOOL_ID)
+        # [outputs example]
         outputs = test_tool.run(data_store=store, params=Parameters())
         assert outputs is not None
         data = outputs.get_dataset("output1")
+        # [outputs example complete]
         assert "hostname:" in data.get_content().decode("utf-8")
 
 
@@ -33,6 +35,7 @@ def test_run_tool_interactive(nova_instance: Connection, galaxy_instance: Galaxy
     with nova_instance.connect() as connection:
         store = connection.get_data_store(name="nova_galaxy_testing")
         store.mark_for_cleanup()
+        # [run interactive tool]
         notebook = Dataset(path="tests/test_files/test_jupyter_notebook.ipynb")
         test_tool = Tool(TEST_INT_TOOL_ID)
         params = Parameters()
@@ -40,8 +43,11 @@ def test_run_tool_interactive(nova_instance: Connection, galaxy_instance: Galaxy
         params.add_input("ipynb", notebook)
         params.add_input("run_it", True)
         link = test_tool.run_interactive(data_store=store, params=params, check_url=False)
+        # [run interactive tool complete]
         assert link is not None
+        # [interactive tool get link]
         assert test_tool.get_url() is not None
+        # [interactive tool get link complete]
         entry_points = galaxy_instance.make_get_request(
             f"{store.nova_connection.galaxy_url}/api/entry_points?running=true"
         )
@@ -85,6 +91,7 @@ def test_status(nova_instance: Connection) -> None:
 
 
 def test_full_status(nova_instance: Connection) -> None:
+    # [basic run tool example]
     with nova_instance.connect() as connection:
         store = connection.get_data_store(name="nova_galaxy_testing")
         store.mark_for_cleanup()
@@ -92,8 +99,11 @@ def test_full_status(nova_instance: Connection) -> None:
         params = Parameters()
         params.add_input("command_mode|command", "fail")
         test_tool.run(data_store=store, params=params)
+        # [basic run tool example complete]
+        # [get status example]
         assert test_tool.get_status() == WorkState.ERROR
         assert test_tool.get_full_status().details != ""
+        # [get status example complete]
         assert test_tool.get_stderr() != ""
 
 
@@ -147,8 +157,10 @@ def test_get_tool_stdout(nova_instance: Connection) -> None:
         state = test_tool.get_status()
         assert state == WorkState.RUNNING
         time.sleep(10)  # Tool takes a moment to produce stdout
+        # [get stdout example]
         stdout = test_tool.get_stdout()
         stdout_substring = test_tool.get_stdout(5, 50)
+        # [get stdout example complete]
         assert stdout is not None
         assert stdout_substring is not None
         assert stdout_substring in stdout
@@ -170,21 +182,28 @@ def test_wait_for_results(nova_instance: Connection, galaxy_instance: GalaxyInst
     store = connection.get_data_store(name="nova_galaxy_testing")
     store.mark_for_cleanup()
     test_tool = Tool(TEST_TOOL_ID)
+    # [async run example]
     outputs = test_tool.run(data_store=store, params=Parameters(), wait=False)
+    # [async run example complete]
     assert outputs is None
     assert test_tool.get_uid() is not None
     test_tool.wait_for_results()
-    assert test_tool.get_results() is not None
+    # [get results example]
+    results = test_tool.get_results()
+    # [get results example complete]
+    assert results is not None
     connection.close()
 
 
 def test_existing_dataset_as_parameter(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
+    # [existing dataset input]
     with nova_instance.connect() as connection:
         store = connection.get_data_store(name="nova_galaxy_testing")
         store.mark_for_cleanup()
         test_tool = Tool(TEST_TOOL_ID)
         test_data = Dataset(path="tests/test_files/test_text_file.txt", force_upload=False)
         test_data.upload(store=store)
+        # [existing dataset input complete]
         params = Parameters()
         params.add_input("test", test_data)
         # doesn't matter here if tool fails
