@@ -322,6 +322,8 @@ class Job:
             return self.url
         timer = max_tries
         while timer > 0:
+            if self.get_state().state == WorkState.ERROR:
+                raise Exception("Could not fetch URL due to Tool Error.")
             if timer < max_tries:
                 time.sleep(1)
             try:
