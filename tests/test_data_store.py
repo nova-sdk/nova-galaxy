@@ -12,9 +12,12 @@ TEST_INT_TOOL_ID = "interactive_tool_generic_output"
 
 
 def test_no_persist_store(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
+    # [create new datastore]
     with nova_instance.connect() as connection:
         store = connection.create_data_store(name="nova_galaxy_testing")
+        # [create new datastore complete]
         store.mark_for_cleanup()
+        # [mark for cleanup complete]
         history = galaxy_instance.histories.get_histories(name=store.name)
         assert len(history) > 0
     history = galaxy_instance.histories.get_histories(name=store.history_id, deleted=False)
@@ -44,9 +47,11 @@ def test_manual_cleanup_store(nova_instance: Connection, galaxy_instance: Galaxy
 
 
 def test_manual_connection_close(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
+    # [manual connection start]
     connection = nova_instance.connect()
     store = connection.get_data_store(name="nova_galaxy_testing")
     store.mark_for_cleanup()
+    # [manual connection complete]
     history = galaxy_instance.histories.get_histories(name=store.name)
     assert len(history) > 0
     assert connection.datastores is not None
