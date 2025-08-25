@@ -4,7 +4,7 @@ import os
 
 from nova.common.job import WorkState
 from nova.galaxy.connection import Connection
-from nova.galaxy.parameters import Parameters
+from nova.galaxy.parameters import WorkflowParameters
 from nova.galaxy.workflow import Workflow
 
 GALAXY_URL = os.environ.get("NOVA_GALAXY_TEST_GALAXY_URL", "https://calvera-test.ornl.gov")
@@ -25,7 +25,7 @@ def test_workflow_lifecycle_with_placeholder_id(nova_instance: Connection) -> No
         ds = connection.get_data_store(name=TEST_HISTORY_NAME_WF)
         workflows = connection.galaxy_instance.workflows.get_workflows(name=WORKFLOW_NAME, published=True)
         workflow_id = workflows[0]["id"]
-        params = Parameters()
+        params = WorkflowParameters()
 
         workflow = Workflow(id=workflow_id)
 
