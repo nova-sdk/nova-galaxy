@@ -35,36 +35,44 @@ To start, you need the ID of the Galaxy workflow you want to run.
 Running a Workflow
 ~~~~~~~~~~~~~~~~~~
 
-To run the workflow, you use the ``run()`` method. This method requires a ``Datastore`` (representing the Galaxy history) and optionally a ``Parameters`` object for inputs.
+To run the workflow, you use the ``run()`` method. This method requires a ``Datastore`` (representing the Galaxy history) and optionally a ``WorkflowParameters`` object for inputs and step-specific parameters.
 
 .. code-block:: python
 
     from nova.galaxy.data_store import Datastore
-    from nova.galaxy.parameters import Parameters
-    from nova.galaxy.dataset import Dataset # Assuming you have an input dataset
+    from nova.galaxy.parameters import WorkflowParameters
+    from nova.galaxy.dataset import Dataset, DatasetCollection
 
     # Assume 'galaxy_connection' is an established Connection object
     # Assume 'history_id' is the ID of the target Galaxy history
     data_store = Datastore(galaxy_connection, history_id=history_id)
 
-    # Prepare parameters (if any)
-    params = Parameters()
-    # Example: Adding an input dataset. 'input_dataset_label' is the label
-    # of the workflow input as defined in Galaxy.
-    # 'input_ds_id' is the Galaxy ID of an existing dataset in the history.
-    input_dataset = Dataset(name="My Input Data", id="input_ds_id")
-    input_dataset.store = data_store # Associate dataset with the datastore
-    params.add_input("input_dataset_label", input_dataset)
+    # Prepare workflow parameters
+    workflow_params = WorkflowParameters()
 
-    # Example: Setting a tool parameter within the workflow.
-    # 'workflow_step_label' is the label of the step in Galaxy.
-    # 'parameter_name' is the name of the parameter for that tool.
-    params.add_parameter("workflow_step_label", {"parameter_name": "parameter_value"})
+    # Example 1: Providing a dataset as a workflow-level input
+    # '0' is the input ID of the workflow (as defined in Galaxy)
+    # 'your_input_dataset_id' is the Galaxy ID of an existing dataset in the history.
+    input_dataset = Dataset(id="your_input_dataset_id")
+    workflow_params.add_workflow_input("0", input_dataset)
 
+    # Example 2: Providing a dataset collection as a workflow-level input
+    # '1' is another input ID of the workflow
+    input_collection = DatasetCollection(id="your_input_collection_id")
+    workflow_params.add_workflow_input("1", input_collection)
+
+    # Example 3: Setting a parameter for a specific step within the workflow
+    # '2' is the ID of the workflow step (as defined in Galaxy)
+    # 'some_tool_param' is the parameter path within that step
+    workflow_params.add_step_param("2", "some_tool_param", "some_value")
+
+    # Example 4: Setting a list of datasets for a parameter in a step
+    list_of_datasets = [Dataset(id="ds_id_1"), Dataset(id="ds_id_2")]
+    workflow_params.add_step_param("3", "multiple_inputs", list_of_datasets)
 
     # Run the workflow and wait for completion (default behavior)
     try:
-        outputs = my_workflow.run(data_store=data_store, params=params, wait=True)
+        outputs = my_workflow.run(data_store=data_store, params=workflow_params, wait=True)
         if outputs:
             print("Workflow completed successfully!")
     except Exception as e:
@@ -147,27 +155,27 @@ Each workflow run (invocation) has a unique ID in Galaxy. You can retrieve this 
     if invocation_id:
         print(f"Galaxy Invocation ID: {invocation_id}")
 
-Accessing Step-Level Jobs
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Accessing Step-Level Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Workflows are composed of individual tool executions (jobs). You can access these as ``Job`` objects using ``get_step_jobs()``. This is useful for monitoring progress at a finer grain or retrieving logs from specific steps.
+Workflows are composed of individual tool executions. You can access these as ``Tool`` objects using ``get_step_jobs()``. This is useful for monitoring progress at a finer grain or retrieving logs from specific steps.
 
 .. code-block:: python
 
-    from nova.galaxy.job import Job
+    from nova.galaxy.tool import Tool
 
-    step_jobs: List[Job] = my_workflow.get_step_jobs()
-    for job in step_jobs:
-        print(f"Step Tool ID: {job.tool_id}, Status: {job.get_status()}")
-        if job.get_status() == WorkState.ERROR:
-            full_job_status = job.get_full_status()
-            print(f"  Job Error Details: {full_job_status.details if full_job_status else 'N/A'}")
+    step_tools: List[Tool] = my_workflow.get_step_jobs()
+    for tool in step_tools:
+        print(f"Step Tool ID: {tool.id}, Status: {tool.get_status()}")
+        if tool.get_status() == WorkState.ERROR:
+            full_tool_status = tool.get_full_status()
+            print(f"  Tool Error Details: {full_tool_status.details if full_tool_status else 'N/A'}")
 
 
 Important Notes
 ---------------
 
-*   **Workflow Definition**: The structure of your ``Parameters`` object (input labels, step labels for parameters) must match how the workflow is defined in Galaxy. Use the Galaxy UI or API to inspect your workflow's inputs and step details.
+*   **Workflow Definition**: The structure of your ``WorkflowParameters`` object (workflow input IDs, step IDs, and parameter paths) must match how the workflow is defined in Galaxy. Use the Galaxy UI or API to inspect your workflow's inputs and step details.
 *   **Dataset IDs**: When providing ``Dataset`` or ``DatasetCollection`` objects as inputs, they must already exist in the Galaxy history and have their ``id`` attribute populated.
 *   **Error Handling**: Always wrap ``run()`` calls (especially with ``wait=True``) in try-except blocks to handle potential exceptions during workflow execution. Check ``get_full_status().details`` for more information on errors.
 *   **State Management**: The ``Workflow`` object primarily manages the state of its *last* invocation. If you need to manage multiple concurrent runs of the same workflow definition, instantiate a new ``Workflow`` object for each run.

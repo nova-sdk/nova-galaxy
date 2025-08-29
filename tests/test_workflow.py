@@ -69,6 +69,38 @@ def test_workflow_lifecycle_with_placeholder_id(nova_instance: Connection) -> No
         )
 
 
+def test_simple_test_workflow_with_dataset(nova_instance: Connection) -> None:
+    """Tests running the 'simple_test_workflow_with_dataset' workflow with specific inputs and parameters."""
+    with nova_instance.connect() as connection:
+        ds = connection.get_data_store(name=TEST_HISTORY_NAME_WF)
+        workflows = connection.galaxy_instance.workflows.get_workflows(
+            name="simple_test_workflow_with_dataset", published=True
+        )
+
+        assert len(workflows) > 0, (
+            "'simple_test_workflow_with_dataset' not found. Please ensure it's published in Galaxy."
+        )
+
+        workflow_id = workflows[0]["id"]
+        params = WorkflowParameters()
+
+        # Set workflow input 0 to True
+        params.add_workflow_input("0", True)
+
+        # Set parameter for step 1
+        params.add_step_param("1", "params|ingest_mode", "file")
+        params.add_step_param("1", "params|filepath", "/SNS/TOPAZ/IPTS-17211/0/22594/NeXus/TOPAZ_22594_event.nxs")
+
+        workflow = Workflow(id=workflow_id)
+
+        workflow.run(data_store=ds, params=params, wait=True)
+
+        # Assertions for successful completion
+        assert workflow.get_status() == WorkState.FINISHED, (
+            f"Workflow did not finish successfully. Current status: {workflow.get_status()}"
+        )
+
+
 def test_workflow_initial_state() -> None:
     """Tests the initial state of a Workflow object before any run."""
     workflow = Workflow(id="another_placeholder_id")

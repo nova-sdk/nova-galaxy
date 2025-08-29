@@ -173,7 +173,14 @@ class Invocation:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
+
+        # galaxy returns once all steps are scheduled instead of complete. Need to wait for each job to complete
         self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id)
+        for step in self.get_step_jobs():
+            if step._job is not None:
+                step._job.wait_for_results()
+                if step.get_status() is not WorkState.FINISHED:
+                    return
 
     def get_state(self) -> InvocationStatus:
         """Returns the current state of the workflow invocation."""
@@ -183,6 +190,15 @@ class Invocation:
         try:
             invocation_details = self.galaxy_instance.invocations.show_invocation(self.invocation_id)
             self.status.state = self._map_galaxy_state_to_workstate(invocation_details["state"])
+            # Galaxy doesn't update workflow state to finished but leaves them at scheduled. Checking each job.
+            if self.status.state is WorkState.QUEUED:
+                jobs_finished = True
+                for step in self.get_step_jobs():
+                    if step.get_status() is not WorkState.FINISHED:
+                        jobs_finished = False
+                if jobs_finished:
+                    self.status.state = WorkState.FINISHED
+
             if self.status.state == WorkState.ERROR and not self.status.details:  # Check details
                 self.status.details = self._extract_error_details_from_invocation(invocation_details)
             if self.status.state == WorkState.FINISHED:
@@ -276,6 +292,24 @@ class Invocation:
         except Exception as e:
             print(f"Warning: Could not fetch invocation step jobs for {self.invocation_id}: {e}")
             return []
+
+    def get_step_name(self, step_number: int) -> str:
+        if not self.invocation_id:
+            return ""
+
+        try:
+            steps = self.galaxy_instance.invocations.show_invocation(self.invocation_id).get("steps")
+            if steps is None:
+                return ""
+
+            if step_number >= len(steps):
+                return ""
+
+            return steps[step_number]["workflow_step_label"]
+
+        except Exception as e:
+            print(f"Warning: Could not fetch invocation step jobs for {self.invocation_id}: {e}")
+            return ""
 
 
 class Workflow(AbstractWorkflow):
@@ -439,6 +473,20 @@ class Workflow(AbstractWorkflow):
             return self._invocation.get_step_jobs()
         return []
 
+    def get_step_name(self, step_number: int) -> str:
+        """Gets the name of the step in the workflow.
+
+        Returns the string of the name of the step associated with the number.
+
+        Returns
+        -------
+        str
+            Name of the step as declared in Galaxy. Empty if step doesn't exist.
+        """
+        if self._invocation:
+            return self._invocation.get_step_name(step_number)
+        return ""
+
     def get_active_step(self) -> Optional[Tool]:
         """Gets the currently active (running) step in the workflow invocation.
 
@@ -460,3 +508,12 @@ class Workflow(AbstractWorkflow):
             if job.get_status().state == WorkState.RUNNING:
                 return job
         return None
+
+    def wait_for_results(self) -> None:
+        """Waits on the workflow to complete.
+
+        This method will wait for a running work to complete
+        """
+        if not self._invocation:
+            return
+        return self._invocation.wait_for_results()
