@@ -10,6 +10,8 @@ env:
   NDIP_DOCKER_REPOSITORY: "${{ secrets.NDIP_DOCKER_REPOSITORY }}"
   READTHEDOCS_WEBHOOK_URL: "${{ secrets.READTHEDOCS_WEBHOOK_URL }}"
   READTHEDOCS_WEBHOOK_SECRET: "${{ secrets.READTHEDOCS_WEBHOOK_SECRET }}"
+  GALAXY_URL: "${{ secrets.GALAXY_URL }}"
+  GALAXY_KEY: "${{ secrets.GALAXY_KEY }}"
 
 jobs:
   build-and-test:
@@ -41,8 +43,8 @@ jobs:
       - name: Run mypy
         run: docker run --rm ${{ steps.build.outputs.imageid }} poetry run mypy .
       - name: Unit tests
-        run: docker run --rm ${{ steps.build.outputs.imageid }} poetry run pytest
+        run: docker run -e GALAXY_URL NOVA_GALAXY_TEST_GALAXY_KEY=${GALAXY_KEY} -e NOVA_GALAXY_TEST_GALAXY_URL=${GALAXY_URL} --rm ${{ steps.build.outputs.imageid }} poetry run pytest
       - name: Run coverage
-        run: docker run --rm ${{ steps.build.outputs.imageid }} sh -c "poetry run coverage run && poetry run coverage report"
+        run: docker run -e GALAXY_URL NOVA_GALAXY_TEST_GALAXY_KEY=${GALAXY_KEY} -e NOVA_GALAXY_TEST_GALAXY_URL=${GALAXY_URL} --rm ${{ steps.build.outputs.imageid }} sh -c "poetry run coverage run && poetry run coverage report"
       - name: Docs test
         run: docker run --rm ${{ steps.build.outputs.imageid }} bash build_docs.sh
