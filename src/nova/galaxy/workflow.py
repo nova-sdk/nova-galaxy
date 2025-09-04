@@ -1,18 +1,33 @@
 """Contains classes to run workflows in Galaxy via Connection."""
 
 from threading import Lock, Thread
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 if TYPE_CHECKING:
     from .data_store import Datastore
-    from .job import Job
 
 from nova.common.job import WorkState
 
-from .dataset import Dataset, DatasetCollection
+from .dataset import AbstractData, Dataset, DatasetCollection
 from .outputs import Outputs
-from .parameters import Parameters
-from .tool import AbstractWork
+from .parameters import Parameters, WorkflowParameters
+from .tool import Tool
+
+
+class AbstractWorkflow:
+    """Abstraction for a runnable object in Galaxy such as a tool or workflow."""
+
+    def __init__(self, id: str):
+        self.id = id
+
+    def get_outputs(self) -> List[AbstractData]:
+        return []
+
+    def get_inputs(self) -> List[Parameters]:
+        return []
+
+    def run(self, data_store: "Datastore", params: WorkflowParameters, wait: bool) -> Union[Outputs, None]:
+        return None
 
 
 class InvocationStatus:
@@ -89,7 +104,7 @@ class Invocation:
                     # TODO: Future enhancement: Extract more specific error messages from step['messages']
         return "\n".join(error_list)
 
-    def _run_and_wait(self, params: Optional[Parameters]) -> None:
+    def _run_and_wait(self, params: Optional[WorkflowParameters]) -> None:
         """Submits workflow invocation and waits for completion."""
         try:
             self.submit(params)
@@ -109,7 +124,7 @@ class Invocation:
             self.status.state = WorkState.ERROR
             self.status.details = f"Error during workflow execution or waiting: {str(e)}"
 
-    def run(self, params: Optional[Parameters], wait: bool) -> Optional[Outputs]:
+    def run(self, params: Optional[WorkflowParameters], wait: bool) -> Optional[Outputs]:
         """Runs the workflow invocation."""
         if self.status.state in [WorkState.NOT_STARTED, WorkState.FINISHED, WorkState.ERROR, WorkState.CANCELED]:
             self.status = InvocationStatus()
@@ -129,69 +144,15 @@ class Invocation:
                 f"intermediate state ({self.status.state}). Cannot start a new run."
             )
 
-    def submit(self, params: Optional[Parameters]) -> None:
-        """Handles input preparation and submits the workflow invocation."""
-        bioblend_inputs = {}
-        bioblend_params = {}
-
+    def submit(self, params: Optional[WorkflowParameters]) -> None:
+        """Handles input preparation and submits the workflow invocation using explicit bioblend approach."""
         try:
-            workflow_details = self.galaxy_instance.workflows.show_workflow(self.workflow_id)
-            label_to_input_id = {v["label"]: k for k, v in workflow_details.get("inputs", {}).items() if v.get("label")}
-            label_to_step_id = {
-                step["label"]: str(step["id"])
-                for step in workflow_details.get("steps", {}).values()
-                if step.get("label")
-            }
-
             if params:
-                for label, value in params.inputs.items():
-                    if isinstance(value, Dataset):
-                        input_id = label_to_input_id.get(label)
-                        if not input_id:
-                            raise ValueError(
-                                f"Input label '{label}' not found in workflow '{self.workflow_id}'."
-                                f" Available input labels: {list(label_to_input_id.keys())}"
-                            )
-                        if not value.id:
-                            raise ValueError(
-                                f"Input dataset '{label}' must have an ID (must exist"
-                                " in Galaxy history). Upload it first if necessary."
-                            )
-                        bioblend_inputs[input_id] = {"src": "hda", "id": value.id}
-                    elif isinstance(value, DatasetCollection):
-                        input_id = label_to_input_id.get(label)
-                        if not input_id:
-                            raise ValueError(
-                                f"Input label '{label}' not found in workflow '{self.workflow_id}'."
-                                f" Available input labels: {list(label_to_input_id.keys())}"
-                            )
-                        if not value.id:
-                            raise ValueError(
-                                f"Input dataset collection '{label}' must have an ID (must exist in Galaxy history)."
-                            )
-                        bioblend_inputs[input_id] = {"src": "hdca", "id": value.id}
-                    elif isinstance(value, dict):
-                        step_id = label_to_step_id.get(label)
-                        if not step_id:
-                            raise ValueError(
-                                f"Step label '{label}' not found in workflow "
-                                "'{self.workflow_id}' for setting parameters. Available "
-                                f"step labels: {list(label_to_step_id.keys())}"
-                            )
-                        bioblend_params[step_id] = value
-                    else:
-                        input_id = label_to_input_id.get(label)
-                        step_id = label_to_step_id.get(label)
-                        if not input_id and not step_id:
-                            print(
-                                f"Warning: Parameter '{label}' is not a Dataset, DatasetCollection, "
-                                "or dictionary associated with a known step label. It will be ignored."
-                            )
-                        else:
-                            if input_id:
-                                bioblend_inputs[input_id] = value
-                            elif step_id:
-                                bioblend_params[step_id] = value
+                bioblend_inputs = params.get_bioblend_inputs()
+                bioblend_params = params.get_bioblend_params()
+            else:
+                bioblend_inputs = {}
+                bioblend_params = {}
 
             self.status.state = WorkState.QUEUED
             invocation_info = self.galaxy_instance.workflows.invoke_workflow(
@@ -212,7 +173,14 @@ class Invocation:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
+
+        # galaxy returns once all steps are scheduled instead of complete. Need to wait for each job to complete
         self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id)
+        for step in self.get_step_jobs():
+            if step._job is not None:
+                step._job.wait_for_results()
+                if step.get_status() is not WorkState.FINISHED:
+                    return
 
     def get_state(self) -> InvocationStatus:
         """Returns the current state of the workflow invocation."""
@@ -222,6 +190,15 @@ class Invocation:
         try:
             invocation_details = self.galaxy_instance.invocations.show_invocation(self.invocation_id)
             self.status.state = self._map_galaxy_state_to_workstate(invocation_details["state"])
+            # Galaxy doesn't update workflow state to finished but leaves them at scheduled. Checking each job.
+            if self.status.state is WorkState.QUEUED:
+                jobs_finished = True
+                for step in self.get_step_jobs():
+                    if step.get_status() is not WorkState.FINISHED:
+                        jobs_finished = False
+                if jobs_finished:
+                    self.status.state = WorkState.FINISHED
+
             if self.status.state == WorkState.ERROR and not self.status.details:  # Check details
                 self.status.details = self._extract_error_details_from_invocation(invocation_details)
             if self.status.state == WorkState.FINISHED:
@@ -294,10 +271,8 @@ class Invocation:
         """Returns the Galaxy invocation ID."""
         return self.invocation_id
 
-    def get_step_jobs(self) -> List["Job"]:
+    def get_step_jobs(self) -> List[Tool]:
         """Returns nova-galaxy Job instances for each step in the workflow invocation."""
-        from .job import Job
-
         if not self.invocation_id:
             return []
 
@@ -305,25 +280,39 @@ class Invocation:
             jobs_summary = self.galaxy_instance.invocations.get_invocation_step_jobs_summary(self.invocation_id)
             step_jobs = []
 
+            tools = self.store.recover_tools(filter_running=True)
+
             for job_info in jobs_summary:
-                if job_info.get("id") and job_info.get("tool_id"):
-                    # Create a Job instance for this step
-                    job = Job(job_info["tool_id"], self.store)
-                    job.id = job_info["id"]
-
-                    # Map Galaxy job state to WorkState
-                    galaxy_state = job_info.get("state", "unknown")
-                    job.status.state = self._map_galaxy_state_to_workstate(galaxy_state)
-
-                    step_jobs.append(job)
+                if job_info.get("id"):
+                    for tool in tools:
+                        if job_info.get("id") == tool.get_uid():
+                            step_jobs.append(tool)
 
             return step_jobs
         except Exception as e:
             print(f"Warning: Could not fetch invocation step jobs for {self.invocation_id}: {e}")
             return []
 
+    def get_step_name(self, step_number: int) -> str:
+        if not self.invocation_id:
+            return ""
 
-class Workflow(AbstractWork):
+        try:
+            steps = self.galaxy_instance.invocations.show_invocation(self.invocation_id).get("steps")
+            if steps is None:
+                return ""
+
+            if step_number >= len(steps):
+                return ""
+
+            return steps[step_number]["workflow_step_label"]
+
+        except Exception as e:
+            print(f"Warning: Could not fetch invocation step jobs for {self.invocation_id}: {e}")
+            return ""
+
+
+class Workflow(AbstractWorkflow):
     """Represents a Galaxy workflow that can be invoked (run).
 
     It's recommended to create a new Workflow object for each invocation
@@ -341,7 +330,9 @@ class Workflow(AbstractWork):
         super().__init__(id)
         self._invocation: Optional[Invocation] = None
 
-    def run(self, data_store: "Datastore", params: Optional[Parameters] = None, wait: bool = True) -> Optional[Outputs]:
+    def run(
+        self, data_store: "Datastore", params: Optional[WorkflowParameters] = None, wait: bool = True
+    ) -> Optional[Outputs]:
         """Invokes (runs) this workflow in the specified data store.
 
         By default, runs in a blocking manner (waits for completion). Set `wait=False`
@@ -455,7 +446,7 @@ class Workflow(AbstractWork):
             return self._invocation.get_invocation_id()
         return None
 
-    def get_step_jobs(self) -> List["Job"]:
+    def get_step_jobs(self) -> List[Tool]:
         """Gets nova-galaxy Job instances for each step in the workflow.
 
         Returns the individual jobs that make up the workflow steps,
@@ -482,7 +473,21 @@ class Workflow(AbstractWork):
             return self._invocation.get_step_jobs()
         return []
 
-    def get_active_step(self) -> Optional["Job"]:
+    def get_step_name(self, step_number: int) -> str:
+        """Gets the name of the step in the workflow.
+
+        Returns the string of the name of the step associated with the number.
+
+        Returns
+        -------
+        str
+            Name of the step as declared in Galaxy. Empty if step doesn't exist.
+        """
+        if self._invocation:
+            return self._invocation.get_step_name(step_number)
+        return ""
+
+    def get_active_step(self) -> Optional[Tool]:
         """Gets the currently active (running) step in the workflow invocation.
 
         This method iterates through all jobs associated with the workflow steps
@@ -500,6 +505,15 @@ class Workflow(AbstractWork):
 
         step_jobs = self._invocation.get_step_jobs()
         for job in step_jobs:
-            if job.status.state == WorkState.RUNNING:
+            if job.get_status().state == WorkState.RUNNING:
                 return job
         return None
+
+    def wait_for_results(self) -> None:
+        """Waits on the workflow to complete.
+
+        This method will wait for a running work to complete
+        """
+        if not self._invocation:
+            return
+        return self._invocation.wait_for_results()
