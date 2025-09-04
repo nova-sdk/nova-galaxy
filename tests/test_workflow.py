@@ -11,7 +11,6 @@ GALAXY_URL = os.environ.get("NOVA_GALAXY_TEST_GALAXY_URL", "https://calvera-test
 GALAXY_API_KEY = os.environ.get("NOVA_GALAXY_TEST_GALAXY_KEY", "")
 
 
-WORKFLOW_NAME = "Simple_test_workflow"
 TEST_HISTORY_NAME_WF = "nova_galaxy_workflow_test_history"
 
 
@@ -23,13 +22,9 @@ def test_workflow_lifecycle_with_placeholder_id(nova_instance: Connection) -> No
     """
     with nova_instance.connect() as connection:
         ds = connection.get_data_store(name=TEST_HISTORY_NAME_WF)
-        workflows = connection.galaxy_instance.workflows.get_workflows(name=WORKFLOW_NAME, published=True)
-        workflow_id = workflows[0]["id"]
-        params = WorkflowParameters()
+        workflow = Workflow(id="placeholder_id")
 
-        workflow = Workflow(id=workflow_id)
-
-        outputs = workflow.run(data_store=ds, params=params, wait=True)
+        outputs = workflow.run(data_store=ds, wait=False)
         assert outputs is None
 
         status = workflow.get_status()
@@ -40,9 +35,10 @@ def test_workflow_lifecycle_with_placeholder_id(nova_instance: Connection) -> No
         print(f"Invocation ID after run(wait=True): {invocation_id}")
         print(f"Full status details: {full_status.details if full_status else 'N/A'}")
 
-        assert status in [WorkState.ERROR, WorkState.QUEUED], (
-            f"Expected ERROR or QUEUED state after run(wait=False), got {status}"
-        )
+        assert status in [
+            WorkState.ERROR,
+            WorkState.QUEUED,
+        ], f"Expected ERROR or QUEUED state after run(wait=False), got {status}"
 
         if status == WorkState.ERROR:
             assert full_status is not None
@@ -64,9 +60,11 @@ def test_workflow_lifecycle_with_placeholder_id(nova_instance: Connection) -> No
         assert len(step_jobs) == 0, "Expected no step jobs for a placeholder/failed workflow"
 
         final_status = workflow.get_status()
-        assert final_status in [WorkState.ERROR, WorkState.CANCELED, WorkState.QUEUED], (
-            f"Unexpected final state: {final_status}"
-        )
+        assert final_status in [
+            WorkState.ERROR,
+            WorkState.CANCELED,
+            WorkState.QUEUED,
+        ], f"Unexpected final state: {final_status}"
 
 
 def test_simple_test_workflow_with_dataset(nova_instance: Connection) -> None:
