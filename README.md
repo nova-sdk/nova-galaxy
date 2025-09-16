@@ -49,9 +49,12 @@ poetry run coverage run
 poetry run coverage report
 ```
 
-## CI/CD in GitLab
+## CI/CD in GitHub
 
-Take a look at the `.gitlab-ci.yml` file. It configures pipelines to run in [GitLab](https://code.ornl.gov/ndip/project-templates/python/-/pipelines).
-Some jobs will run automatically on each commit, jobs to
-build packages and Docker images need to be trigerred manually. Don't forget to set versions properly:
-in `pyproject.toml` for python package and in `.gitlab-ci.yml` for Docker tag.
+Take a look at the [`.github/workflows`](.github/workflows) folder.
+Actions to lint and test your code will run automatically on each commit.
+The action for building and releasing this package needs to be triggered manually.
+
+### Publishing docs to readthedocs.io
+
+This repo has a [webhook](https://github.com/nova-model/nova-galaxy/settings/hooks) that automatically triggers documentation builds on readthedocs.
