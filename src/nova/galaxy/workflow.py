@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .data_store import Datastore
 
 from bioblend import TimeoutException
+
 from nova.common.job import WorkState
 
 from .dataset import AbstractData, Dataset, DatasetCollection
@@ -170,19 +171,18 @@ class Invocation:
             self.status.details = f"Failed to prepare or submit workflow invocation: {str(e)}"
             self.invocation_id = None
 
-    def wait_for_results(self, max_tries=120) -> None:
+    def wait_for_results(self, max_tries: float = 120) -> None:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
-
 
         # galaxy doesn't always return when a job fails. Periodically checking the jobs to see if we should return.
         attempt_counter = 0
         while True:
             try:
                 if attempt_counter < max_tries:
-                    self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait = 5)
-            except TimeoutException as e:
+                    self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
+            except TimeoutException:
                 # check if any steps failed. If they have we return. Otherwise we just wait some more.
                 attempt_counter += 1
                 for step in self.get_step_jobs(running_only=False):
