@@ -182,6 +182,7 @@ class Invocation:
             try:
                 if attempt_counter < max_tries:
                     self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
+                    break
             except TimeoutException:
                 # check if any steps failed. If they have we return. Otherwise we just wait some more.
                 attempt_counter += 1
@@ -193,7 +194,7 @@ class Invocation:
         # galaxy returns once all steps are scheduled instead of complete. Need to wait for each job to complete
         for step in self.get_step_jobs():
             if step._job is not None:
-                step._job.wait_for_results(running_only=False)
+                step._job.wait_for_results()
                 if step.get_status() is not WorkState.FINISHED:
                     return
 
