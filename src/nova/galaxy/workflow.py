@@ -178,11 +178,10 @@ class Invocation:
 
         # galaxy doesn't always return when a job fails. Periodically checking the jobs to see if we should return.
         attempt_counter = 0
-        while True:
+        while attempt_counter < max_tries:
             try:
-                if attempt_counter < max_tries:
-                    self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
-                    break
+                self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
+                break
             except TimeoutException:
                 # check if any steps failed. If they have we return. Otherwise we just wait some more.
                 attempt_counter += 1
