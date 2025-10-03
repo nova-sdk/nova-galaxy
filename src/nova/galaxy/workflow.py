@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 if TYPE_CHECKING:
     from .data_store import Datastore
 
+from bioblend import TimeoutException
+
 from nova.common.job import WorkState
 
 from .dataset import AbstractData, Dataset, DatasetCollection
@@ -169,13 +171,27 @@ class Invocation:
             self.status.details = f"Failed to prepare or submit workflow invocation: {str(e)}"
             self.invocation_id = None
 
-    def wait_for_results(self) -> None:
+    def wait_for_results(self, max_tries: int | None = None) -> None:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
 
+        # galaxy doesn't always return when a job fails. Periodically checking the jobs to see if we should return.
+        attempt_counter = 0
+        while True:
+            try:
+                if max_tries is None or attempt_counter < max_tries:
+                    self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
+                break
+            except TimeoutException:
+                # check if any steps failed. If they have we return. Otherwise we just wait some more.
+                attempt_counter += 1
+                for step in self.get_step_jobs(running_only=False):
+                    if step._job is not None:
+                        if step.get_status() is WorkState.ERROR:
+                            return
+
         # galaxy returns once all steps are scheduled instead of complete. Need to wait for each job to complete
-        self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id)
         for step in self.get_step_jobs():
             if step._job is not None:
                 step._job.wait_for_results()
@@ -271,7 +287,7 @@ class Invocation:
         """Returns the Galaxy invocation ID."""
         return self.invocation_id
 
-    def get_step_jobs(self) -> List[Tool]:
+    def get_step_jobs(self, running_only: bool = True) -> List[Tool]:
         """Returns nova-galaxy Job instances for each step in the workflow invocation."""
         if not self.invocation_id:
             return []
@@ -279,8 +295,7 @@ class Invocation:
         try:
             jobs_summary = self.galaxy_instance.invocations.get_invocation_step_jobs_summary(self.invocation_id)
             step_jobs = []
-
-            tools = self.store.recover_tools(filter_running=True)
+            tools = self.store.recover_tools(filter_running=running_only)
 
             for job_info in jobs_summary:
                 if job_info.get("id"):
@@ -446,11 +461,17 @@ class Workflow(AbstractWorkflow):
             return self._invocation.get_invocation_id()
         return None
 
-    def get_step_jobs(self) -> List[Tool]:
+    def get_step_jobs(self, running_only: bool = True) -> List[Tool]:
         """Gets nova-galaxy Job instances for each step in the workflow.
 
         Returns the individual jobs that make up the workflow steps,
         allowing access to step-level status, outputs, and console logs.
+
+        Parameters
+        ----------
+        running_only : Optional[bool]
+            A boolean that determines whether or not to return only jobs which
+           are currently running.
 
         Returns
         -------
@@ -470,7 +491,7 @@ class Workflow(AbstractWorkflow):
         ...         print(console.get('stdout', ''))
         """
         if self._invocation:
-            return self._invocation.get_step_jobs()
+            return self._invocation.get_step_jobs(running_only)
         return []
 
     def get_step_name(self, step_number: int) -> str:
