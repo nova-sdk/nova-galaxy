@@ -171,16 +171,17 @@ class Invocation:
             self.status.details = f"Failed to prepare or submit workflow invocation: {str(e)}"
             self.invocation_id = None
 
-    def wait_for_results(self, max_tries: float = 120) -> None:
+    def wait_for_results(self, max_tries: int | None = None) -> None:
         """Waits for the workflow invocation to complete."""
         if not self.invocation_id:
             raise Exception("Cannot wait for results, invocation ID is not set.")
 
         # galaxy doesn't always return when a job fails. Periodically checking the jobs to see if we should return.
         attempt_counter = 0
-        while attempt_counter < max_tries:
+        while True:
             try:
-                self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
+                if max_tries is None or attempt_counter < max_tries:
+                    self.galaxy_instance.invocations.wait_for_invocation(self.invocation_id, maxwait=5)
                 break
             except TimeoutException:
                 # check if any steps failed. If they have we return. Otherwise we just wait some more.
