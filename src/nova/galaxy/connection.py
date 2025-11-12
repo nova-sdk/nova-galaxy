@@ -1,9 +1,11 @@
 """The NOVA class is responsible for managing interactions with a Galaxy server instance."""
 
 from typing import Any, List
+from urllib.parse import urlparse
 
 from bioblend import galaxy
 from deprecated import deprecated
+from requests import head
 
 from .data_store import Datastore
 from .tool import stop_all_tools_in_store
@@ -137,8 +139,8 @@ class Connection:
 
     Attributes
     ----------
-        galaxy_url (Optional[str]): URL of the Galaxy instance.
-        galaxy_api_key (Optional[str]): API key for the Galaxy instance.
+        galaxy_url (str): URL of the Galaxy instance.
+        galaxy_api_key (str): API key for the Galaxy instance.
     """
 
     def __init__(
@@ -153,7 +155,13 @@ class Connection:
             galaxy_url str: URL of the Galaxy instance.
             galaxy_key str: API key for the Galaxy instance.
         """
-        self.galaxy_url = galaxy_url
+        # Check for redirects on the URL and follow them to the final Galaxy URL.
+        response = head(galaxy_url, allow_redirects=True)
+        resolved_url = response.url
+        parsed_url = urlparse(resolved_url)
+        new_galaxy_url = f"{parsed_url.scheme}://{parsed_url.hostname}"
+
+        self.galaxy_url = new_galaxy_url
         self.galaxy_api_key = galaxy_key
         self.galaxy_instance: galaxy.GalaxyInstance
 
