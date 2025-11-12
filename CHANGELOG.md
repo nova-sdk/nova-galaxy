@@ -1,5 +1,14 @@
 ## Nova Galaxy 0.12.0 (in progress)
 
+### Nova Galaxy 0.11.4
+- Allows connecting to a Galaxy URL that returns a redirect (thanks to John Duggan). [Pull request 57](https://github.com/nova-model/nova-galaxy/pull/57)
+
+### Nova Galaxy 0.11.3
+- Minor fixes for workflow parameters (thanks to Andrew Ayres). [Pull request 53](https://github.com/nova-model/nova-galaxy/pull/53)
+
+### Nova Galaxy 0.11.2
+- Workflow parameters are now more explicitly defined (thanks to Andrew Ayres). [Commit](https://github.com/nova-model/nova-galaxy/commit/fc7ca763c400698e51f81c99764bb8c696b6ecca)
+
 ### Nova Galaxy 0.11.1
 - Improved the performance of Job.get_url when check_url parameter is set to False (thanks to John Duggan). [Pull request 43](https://github.com/nova-model/nova-galaxy/pull/43)
 
