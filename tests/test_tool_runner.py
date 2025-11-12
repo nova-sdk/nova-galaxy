@@ -47,7 +47,7 @@ class NotebookTool(BasicTool):
 
     def prepare_tool(self) -> Tuple[Tool, Optional[Parameters]]:
         tool_params = None
-        tool = Tool(id="interactive_tool_generic_output")
+        tool = Tool(id="interactive_tool_jupyter_notebook")
         return tool, tool_params
 
     def get_results(self, tool: Tool) -> bytes:

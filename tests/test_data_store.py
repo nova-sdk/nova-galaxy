@@ -8,7 +8,7 @@ from nova.common.job import WorkState
 from nova.galaxy.connection import Connection
 from nova.galaxy.tool import Tool
 
-TEST_INT_TOOL_ID = "interactive_tool_generic_output"
+TEST_INT_TOOL_ID = "interactive_tool_jupyter_notebook"
 
 
 def test_no_persist_store(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
