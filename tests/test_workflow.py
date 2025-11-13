@@ -76,9 +76,9 @@ def test_simple_test_workflow_with_dataset(nova_instance: Connection) -> None:
             name="simple_test_workflow_with_dataset", published=True
         )
 
-        assert (
-            len(workflows) > 0
-        ), "'simple_test_workflow_with_dataset' not found. Please ensure it's published in Galaxy."
+        assert len(workflows) > 0, (
+            "'simple_test_workflow_with_dataset' not found. Please ensure it's published in Galaxy."
+        )
 
         workflow_id = workflows[0]["id"]
         params = WorkflowParameters()
@@ -95,9 +95,9 @@ def test_simple_test_workflow_with_dataset(nova_instance: Connection) -> None:
         workflow.run(data_store=ds, params=params, wait=True)
 
         # Assertions for successful completion
-        assert (
-            workflow.get_status() == WorkState.FINISHED
-        ), f"Workflow did not finish successfully. Current status: {workflow.get_status()}"
+        assert workflow.get_status() == WorkState.FINISHED, (
+            f"Workflow did not finish successfully. Current status: {workflow.get_status()}"
+        )
 
 
 def test_workflow_initial_state() -> None:
