@@ -11,7 +11,7 @@ RUN pixi install
 SHELL [ "pixi", "run" ]
 ENTRYPOINT [ "pixi", "run" ]
 
-RUN chmod og+rwX -R /src /.cache
+RUN chmod og+rwX -R /src
 
 FROM --platform=amd64 python:3.10-slim AS package
 
