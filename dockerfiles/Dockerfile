@@ -1,16 +1,27 @@
 FROM --platform=amd64 python:3.10-slim AS source
 
-# make sure image can run as non-root user
-ENV POETRY_CACHE_DIR=/poetry/.cache
-ENV POETRY_CONFIG_DIR=/poetry/.config
-ENV POETRY_HOME=/poetry
+RUN apt update && apt install -y curl wget
 
-RUN pip install poetry
 COPY . /src
 WORKDIR /src
 
-RUN poetry install
-RUN poetry build --format=wheel
+RUN curl -fsSL https://pixi.sh/install.sh | sh
+ENV PATH="/root/.pixi/bin:${PATH}"
+RUN pixi install
+SHELL [ "pixi", "run" ]
+ENTRYPOINT [ "pixi", "run" ]
 
-RUN chmod og+rwX -R /poetry
-RUN chmod og+rwX -R /src
+RUN chmod og+rwX -R /src /.cache
+
+FROM --platform=amd64 python:3.10-slim AS package
+
+RUN apt update && apt install -y curl
+
+COPY . /src
+WORKDIR /src
+
+RUN curl -fsSL https://pixi.sh/install.sh | sh
+ENV PATH="/root/.pixi/bin:${PATH}"
+RUN pixi install -e production
+SHELL [ "pixi", "run" ]
+ENTRYPOINT [ "pixi", "run" ]
