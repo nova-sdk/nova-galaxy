@@ -24,6 +24,7 @@ production = {features = [], solve-group = "default"}
 
 [tool.pixi.pypi-dependencies]
 nova-galaxy = { path = ".", editable = true }
+hatch = "*"
 bioblend = ">=1.5.0"
 tomli = ">=2.0.2"
 deprecated = ">=1.2.18"
