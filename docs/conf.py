@@ -7,7 +7,7 @@ copyright = "2023, ORNL"
 author = "Andrew Ayres"
 with open("../pyproject.toml", "rb") as toml_file:
     toml_dict = tomli.load(toml_file)
-    release = toml_dict["tool"]["poetry"]["version"]
+    release = toml_dict["project"]["version"]
 
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.viewcode", "sphinx_rtd_theme"]
 

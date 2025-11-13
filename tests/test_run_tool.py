@@ -4,15 +4,15 @@ import time
 
 from bioblend.galaxy import GalaxyInstance
 from bioblend.galaxy.datasets import DatasetClient
-
 from nova.common.job import WorkState
+
 from nova.galaxy.connection import Connection
 from nova.galaxy.dataset import Dataset
 from nova.galaxy.parameters import Parameters
 from nova.galaxy.tool import Tool
 
 TEST_TOOL_ID = "neutrons_remote_command"
-TEST_INT_TOOL_ID = "interactive_tool_generic_output"
+TEST_INT_TOOL_ID = "interactive_tool_jupyter_notebook"
 # If test fails, these files may be moved or no longer exists.
 REMOTE_FILE_PATH = "/HFIR/CG3/shared/Cycle509/IntermediateConfigNiQ_RC509.txt"
 REMOTE_FILE_PATH_2 = "/HFIR/CG3/shared/Cycle509/Long6AConfigURBj_RC509.txt"

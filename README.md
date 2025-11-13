@@ -16,37 +16,36 @@ You can install this package directly with
 pip install nova-galaxy
 ```
 
-or with Poetry by placing the following in your pyproject.toml file (you can version lock with typical Semantic Versioning syntax)
+or with [Pixi](https://pixi.sh/latest/):
 
 
-```
-[tool.poetry.dependencies]
-nova-galaxy = "*"
+```commandline
+pixi add --pypi nova-galaxy
 ```
 
 ## Formatting
 ```commandline
-poetry run ruff format
+pixi run ruff format
 ```
 
 ## Linting
 ```commandline
-poetry run ruff check
-poetry run mypy .
+pixi run ruff check
+pixi run mypy .
 ```
 
 ## Testing
 You can run the tests for this package with the following command from the base directory:
 ```commandline
-NOVA_GALAXY_TEST_GALAXY_URL=galaxy-url NOVA_GALAXY_TEST_GALAXY_KEY=key poetry run pytest tests/
+NOVA_GALAXY_TEST_GALAXY_URL=galaxy-url NOVA_GALAXY_TEST_GALAXY_KEY=key pixi run pytest tests/
 ```
 with `NOVA_GALAXY_TEST_GALAXY_URL` being the url of your Galaxy instance and `NOVA_GALAXY_TEST_GALAXY_KEY` being your
 Galaxy API Key.
 
 To run tests with coverage (include the above environment variables):
 ```commandline
-poetry run coverage run
-poetry run coverage report
+pixi run coverage run
+pixi run coverage report
 ```
 
 ## CI/CD in GitHub

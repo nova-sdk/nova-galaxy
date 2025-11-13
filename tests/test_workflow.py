@@ -3,6 +3,7 @@
 import os
 
 from nova.common.job import WorkState
+
 from nova.galaxy.connection import Connection
 from nova.galaxy.parameters import WorkflowParameters
 from nova.galaxy.workflow import Workflow
