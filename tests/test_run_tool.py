@@ -4,8 +4,8 @@ import time
 
 from bioblend.galaxy import GalaxyInstance
 from bioblend.galaxy.datasets import DatasetClient
-
 from nova.common.job import WorkState
+
 from nova.galaxy.connection import Connection
 from nova.galaxy.dataset import Dataset
 from nova.galaxy.parameters import Parameters

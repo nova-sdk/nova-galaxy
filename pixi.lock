@@ -947,7 +947,7 @@ packages:
 - pypi: ./
   name: nova-galaxy
   version: 0.11.3
-  sha256: 6379e9915294c6d6047eac022a068d36c25a0a199ba5fc0e004a7199ab3b1553
+  sha256: c845b5d60fd4f556aa8e7eb28a0dd483b8722524d966428fd730c7e4903f31c1
   requires_python: '>=3.10,<3.14'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.0-h26f9b46_0.conda

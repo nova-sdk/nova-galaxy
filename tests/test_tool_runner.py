@@ -6,9 +6,9 @@ from typing import Any, Dict, Optional, Tuple
 
 import blinker
 import pytest
-
 from nova.common.job import WorkState
 from nova.common.signals import Signal, ToolCommand, get_signal_id
+
 from nova.galaxy import BasicTool, Connection, Parameters, Tool, ToolRunner
 from nova.galaxy.connection import global_cleanup, global_get_running_tools
 
