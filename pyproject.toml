@@ -1,6 +1,6 @@
 [project]
 name = "nova-galaxy"
-version = "0.11.4"
+version = "0.11.5"
 description = "Utilties for accessing the ORNL Galaxy instance"
 authors = [
     { name = "Greg Watson", email = "watsongr@ornl.gov" },
@@ -11,6 +11,13 @@ readme = "README.md"
 license = "MIT"
 keywords = ["NOVA", "Galaxy", "python"]
 requires-python = ">=3.10,<3.14"
+dependencies = [
+    "bioblend>=1.5.0",
+    "blinker>=1.9.0",
+    "deprecated>=1.2.18",
+    "nova-common>=0.2.0",
+    "tomli>=2.0.2"
+]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
@@ -25,11 +32,6 @@ production = {features = [], solve-group = "default"}
 [tool.pixi.pypi-dependencies]
 nova-galaxy = { path = ".", editable = true }
 hatch = "*"
-bioblend = ">=1.5.0"
-tomli = ">=2.0.2"
-deprecated = ">=1.2.18"
-nova-common = ">=0.2.0"
-blinker = ">=1.9.0"
 pytest-asyncio = ">=0.26.0"
 
 [tool.pixi.feature.dev.pypi-dependencies]
