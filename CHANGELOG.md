@@ -1,5 +1,8 @@
 ## Nova Galaxy 0.12.0 (in progress)
 
+### Nova Galaxy 0.11.5
+- Fixes a packaging issue where some dependencies weren't included in the final build (thanks to John Duggan). Pull request TODO
+
 ### Nova Galaxy 0.11.4
 - Allows connecting to a Galaxy URL that returns a redirect (thanks to John Duggan). [Pull request 57](https://github.com/nova-model/nova-galaxy/pull/57)
 
