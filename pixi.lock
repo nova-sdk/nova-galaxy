@@ -1347,8 +1347,8 @@ packages:
   requires_python: '>=3.10,<4.0'
 - pypi: ./
   name: nova-galaxy
-  version: 0.11.4
-  sha256: 729d150d1f4ee48cdf2fc4376e6752eee694e0882ff481ed49e375bac6219307
+  version: 0.11.5
+  sha256: 2b3c44f0d8556ee4b4b94c847fe3f3a52a01431f20fc778c02ed909282ff0f80
   requires_dist:
   - bioblend>=1.5.0
   - blinker>=1.9.0
