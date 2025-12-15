@@ -31,7 +31,7 @@ We welcome feature suggestions! To propose a new feature:
 ### Submitting Changes
 
 If you'd like to contribute code changes, please follow our
-[style guidelines](https://calvera.ornl.gov/docs/dev_guide/contributing/style_guidelines/).
+[style guidelines](https://ndip.ornl.gov/docs/dev_guide/contributing/style_guidelines/).
 
 ## Code of Conduct
 
