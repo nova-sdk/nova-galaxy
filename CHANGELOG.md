@@ -1,5 +1,8 @@
 ## Nova Galaxy 0.12.0 (in progress)
 
+### Nova Galaxy 0.11.6
+- Fixes an issue where `get_url` could hang indefinitely when checking interactive tool URLs (thanks to John Duggan). [Pull request 62](https://github.com/nova-model/nova-galaxy-pull/62)
+
 ### Nova Galaxy 0.11.5
 - Fixes a packaging issue where some dependencies weren't included in the final build (thanks to John Duggan). [Pull request 61](https://github.com/nova-model/nova-galaxy/pull/61)
 

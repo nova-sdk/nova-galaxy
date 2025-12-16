@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from bioblend import galaxy
 from bioblend.galaxy.datasets import DatasetClient
+from requests.exceptions import Timeout
 
 if TYPE_CHECKING:
     from .data_store import Datastore
@@ -338,10 +339,13 @@ class Job:
                             self.url = url
                             return url
 
-                        response = self.galaxy_instance.make_get_request(url)
-                        if response.status_code == 200:
-                            self.url = url
-                            return url
+                        try:
+                            response = self.galaxy_instance.make_get_request(url, timeout=0.1)
+                            if response.status_code == 200:
+                                self.url = url
+                                return url
+                        except Timeout:
+                            pass
             except Exception:
                 continue
             finally:

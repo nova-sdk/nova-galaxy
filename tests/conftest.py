@@ -7,7 +7,7 @@ from bioblend.galaxy import GalaxyInstance
 
 from nova.galaxy.connection import Connection
 
-GALAXY_URL = os.environ.get("NOVA_GALAXY_TEST_GALAXY_URL", "https://calvera-test.ornl.gov")
+GALAXY_URL = os.environ.get("NOVA_GALAXY_TEST_GALAXY_URL", "https://ndip-test.ornl.gov")
 GALAXY_API_KEY = os.environ.get("NOVA_GALAXY_TEST_GALAXY_KEY")
 
 
