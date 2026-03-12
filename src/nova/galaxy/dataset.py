@@ -96,7 +96,7 @@ class Dataset(AbstractData):
                 history_id=store.history_id, tool_id=LOAD_NEUTRON_DATA_TOOL, tool_inputs=tool_inputs
             )
             self.id = results["outputs"][0]["id"]
-            self.store = self.store
+            self.store = store
 
         else:
             file_name = name if name else self.name

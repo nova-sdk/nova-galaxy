@@ -8,6 +8,7 @@ from nova.galaxy.dataset import Dataset, DatasetCollection
 
 # If test fails, this file may be moved or no longer exists.
 REMOTE_FILE_PATH = "/HFIR/CG3/shared/Cycle509/IntermediateConfigNiQ_RC509.txt"
+LOCAL_FILE_PATH = "IntermediateConfigNiQ_RC509.txt"
 
 
 def test_dataset_upload(nova_instance: Connection) -> None:
@@ -47,6 +48,11 @@ def test_remote_file_ingest(nova_instance: Connection, galaxy_instance: GalaxyIn
         data.upload(store=store)
         dataset_client = DatasetClient(galaxy_instance)
         dataset_upstream = dataset_client.show_dataset(dataset_id=data.id)
+
+        # Test downloading the dataset locally to ensure that the store and ID of the dataset
+        # were properly set.
+        data.download(LOCAL_FILE_PATH)
+
         assert dataset_upstream is not None
 
 
