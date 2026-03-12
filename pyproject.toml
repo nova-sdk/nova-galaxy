@@ -1,6 +1,6 @@
 [project]
 name = "nova-galaxy"
-version = "0.11.6"
+version = "0.11.7"
 description = "Utilties for accessing the ORNL Galaxy instance"
 authors = [
     { name = "Greg Watson", email = "watsongr@ornl.gov" },
