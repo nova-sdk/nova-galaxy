@@ -23,6 +23,32 @@ or with [Pixi](https://pixi.sh/latest/):
 pixi add --pypi nova-galaxy
 ```
 
+## Command line
+
+This package installs a `nova` command.
+
+```commandline
+export GALAXY_URL=https://your-galaxy.instance
+export GALAXY_KEY=your-api-key
+
+nova connect
+# If you prefer the CLI over environment variables for providing credentials, then below is equivalent.
+# nova connect --galaxy-url https://your-galaxy.instance --galaxy-key "your-api-key"
+```
+
+```
+Connected to Galaxy
+  requested_url: https://your-galaxy.instance
+  resolved_url: https://your-galaxy.instance
+  version:
+    version_major: 26.1
+    version_minor: rc1
+  user:
+    ...
+```
+
+Add `-o json` for machine-readable output.
+
 ## Formatting
 ```commandline
 pixi run ruff format

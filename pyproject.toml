@@ -14,14 +14,18 @@ requires-python = ">=3.10,<3.14"
 dependencies = [
     "bioblend>=1.5.0",
     "blinker>=1.9.0",
+    "click>=8.1",
     "deprecated>=1.2.18",
     "nova-common>=0.2.0",
     "tomli>=2.0.2"
 ]
 
+[project.scripts]
+nova = "nova.galaxy.cli:main"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-64"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
 
 [tool.pixi.environments]
 default = {features = ["dev"], solve-group = "default"}
@@ -45,6 +49,9 @@ sphinx = "*"
 sphinx-rtd-theme = ">=3.0.0rc3"
 sphinxcontrib-napoleon = "*"
 tomli = ">=2.0.2"
+
+[tool.pixi.tasks]
+nova = "nova"
 
 [build-system]
 requires = ["hatchling"]

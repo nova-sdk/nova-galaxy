@@ -1,6 +1,6 @@
 """The NOVA class is responsible for managing interactions with a Galaxy server instance."""
 
-from typing import Any, List
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 from bioblend import galaxy
@@ -63,6 +63,12 @@ class ConnectionHelper:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit method for use with "with" keyword."""
         self.close()
+
+    def get_current_user(self) -> Dict[str, Any]:
+        return self.galaxy_instance.users.get_current_user()
+
+    def get_version(self) -> Dict[str, Any]:
+        return self.galaxy_instance.config.get_version()
 
     @deprecated(version="0.8.0", reason="Should use `get_data_store() instead.")
     def create_data_store(self, name: str) -> Datastore:
