@@ -7,11 +7,10 @@ from typing import Any, Dict, List, Optional
 class Report:
     """A command's result."""
 
-    INDENT = "  "
-
-    def __init__(self, payload: Optional[Dict[str, Any]] = None, title: str = "") -> None:
+    def __init__(self, payload: Optional[Dict[str, Any]] = None, title: str = "", indent: int = 2) -> None:
         self.payload: Dict[str, Any] = payload if payload is not None else {}
         self.title = title
+        self.indent = indent
 
     def __str__(self) -> str:
         """Return a human-readable string representation of the object."""
@@ -21,7 +20,7 @@ class Report:
         return "\n".join([self.title, *self._expand(self.payload, depth=1)])
 
     def get_json(self) -> str:
-        return json.dumps(self.payload, indent=2)
+        return json.dumps(self.payload, indent=self.indent)
 
     def _expand(self, value: Any, depth: int) -> List[str]:
         """Render the contents of a dict or a list as indented lines, one entry per line.
@@ -39,5 +38,5 @@ class Report:
         """Render one entry: a scalar beside its label, a dict or a list indented beneath it."""
         nested = self._expand(value, depth + 1)
         if nested:
-            return [f"{self.INDENT * depth}{label}", *nested]
-        return [f"{self.INDENT * depth}{label} {value}"]
+            return [f"{' ' * self.indent * depth}{label}", *nested]
+        return [f"{' ' * self.indent * depth}{label} {value}"]
