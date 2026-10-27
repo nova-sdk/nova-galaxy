@@ -14,7 +14,7 @@ TEST_INT_TOOL_ID = "interactive_tool_jupyter_notebook"
 def test_no_persist_store(nova_instance: Connection, galaxy_instance: GalaxyInstance) -> None:
     # [create new datastore]
     with nova_instance.connect() as connection:
-        store = connection.create_data_store(name="nova_galaxy_testing")
+        store = connection.get_data_store(name="nova_galaxy_testing")
         # [create new datastore complete]
         store.mark_for_cleanup()
         # [mark for cleanup complete]

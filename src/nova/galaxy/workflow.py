@@ -85,6 +85,7 @@ class Invocation:
             "canceled": WorkState.CANCELED,
             # Invocation-specific states
             "scheduled": WorkState.QUEUED,
+            "completed": WorkState.FINISHED,
             "failed": WorkState.ERROR,
             # Job-specific states
             "upload": WorkState.UPLOADING_DATA,
